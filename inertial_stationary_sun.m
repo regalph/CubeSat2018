@@ -1,0 +1,83 @@
+% Robin Pflager
+% June 2018
+% UW CubeSat Orbit Propagator 
+
+
+%% intial conditions and constants
+G = 6.675452 * 10^-11; % N per kg^2 per m^2
+au = 149597870700; % m
+year = 31557600; % s, Julian Year
+m_earth = 5.97237 * 10^24; % kg
+m_sun = 1.98855 * 10^30; % kg
+
+p_earth = [au, 0, 0]; % m
+v_earth = [0,2*pi*au/year,0]; % m per s
+
+%% define time resolution and length
+TR = .001; % samples per second
+L = year*20; % seconds per simulation
+
+%% call new object function -> object(xpos,ypos,xvel,yvel)
+th_object = pi/3;
+p_object = au*[cos(th_object),sin(th_object), 0] + [.01*au, 0, 0];
+v_object = 2*pi*au/year*[cos(th_object + pi/2), sin(th_object + pi/2), 0]; % + [0, 12700, 0];
+
+%% propagate and store
+earth_path = zeros(TR*L,3);
+object_path = zeros(TR*L,3);
+
+earth_path_rot = zeros(TR*L,3);
+object_path_rot = zeros(TR*L,3);
+
+for step = 1:(TR*L)
+    
+    theta = atan2(p_earth(2),p_earth(1));
+       
+    rotation = [cos(theta), -sin(theta), 0; sin(theta), cos(theta), 0; 0, 0, 1];
+    p_object_rot = p_object * rotation;
+    p_earth_rot = p_earth * rotation;
+        
+    earth_path(step,1)=p_earth(1);
+    earth_path(step,2)=p_earth(2);
+    earth_path_rot(step,1)=p_earth_rot(1);
+    earth_path_rot(step,2)=p_earth_rot(2);
+    
+    object_path(step,1)=p_object(1);
+    object_path(step,2)=p_object(2);
+    object_path_rot(step,1)=p_object_rot(1);
+    object_path_rot(step,2)=p_object_rot(2);
+        
+    a_EarthDueToSun = G * m_sun * (-p_earth) / norm(p_earth)^3;
+    
+    a_ObjectDueToSun = G * m_sun * (-p_object) / norm(p_object)^3;
+    a_ObjectDueToEarth = G * m_earth * (p_earth - p_object) / norm(p_earth - p_object)^3;
+    a_ObjectSum = a_ObjectDueToSun + a_ObjectDueToEarth;
+    
+    v_object = v_object + a_ObjectSum * (1/TR);
+    v_earth = v_earth + a_EarthDueToSun * (1/TR);
+    
+    p_object = p_object + v_object * (1/TR);
+    p_earth = p_earth + v_earth * (1/TR);
+    
+end
+
+%% inertial reference frame
+figure(3);
+scatter(0,0,100,'y','filled');
+xlim([-2*10^11, 2*10^11])
+ylim([-2*10^11, 2*10^11])
+hold on;
+scatter(earth_path(:,1),earth_path(:,2),9,'b','filled');
+%plot path
+scatter(object_path(:,1),object_path(:,2),2,'k','filled')
+
+%% rotating Sun-Earth reference frame
+figure(4);
+scatter(0,0,100,'y','filled');
+xlim([-10^10, 2*10^11])
+ylim([-10^10, 2*10^11])
+pbaspect([1,1,1]);
+hold on;
+scatter(earth_path_rot(:,1),earth_path_rot(:,2),9,'b','filled');
+%plot path
+scatter(object_path_rot(:,1),object_path_rot(:,2),2,'k','filled')

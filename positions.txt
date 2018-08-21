@@ -1,0 +1,19 @@
+Mission req:
+
+from sun
+utcepoch = 28108.1928432857
+x = 146759511741 m
+y = -223897479 m 
+z = 0
+vx = -354.6 m/s
+vy = -1370.2 m/s
+vz = 0
+
+from barycenter
+utcepoch = 28108.1928432857
+x = 146759062430 m
+y = -223897479 m 
+z = 0
+vx = -354.6 m/s
+vy = -1370.2 m/s
+vz = 0
